@@ -1,7 +1,8 @@
-import { db, storage } from '../config/firebase'
+import { db, storage,auth } from '../config/firebase'
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage'
 import { collection, getDocs, addDoc, deleteDoc, doc, query, onSnapshot, orderBy, limit, startAfter, serverTimestamp, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid'
+import { createUserWithEmailAndPassword, sendPasswordResetEmail, signInWithEmailAndPassword } from 'firebase/auth';
 
 const { Readable } = require('stream');
 
@@ -355,9 +356,13 @@ export const updateUser =(req,res)=>new Promise(async(resolve, reject)=>{
                                     images:imageDatas
                                  })
 
+
+                                
+
         
         
                                 }
+                               
                             }
                         );
             
@@ -366,6 +371,7 @@ export const updateUser =(req,res)=>new Promise(async(resolve, reject)=>{
                             bufferStream.push(null);
                             bufferStream.pipe(uploadStream);
                         }
+                        // console.log('...body',...body)
 
 
                 
@@ -430,5 +436,72 @@ export const updateUser =(req,res)=>new Promise(async(resolve, reject)=>{
             message:error
         
         })
+    }
+})
+
+
+
+
+export const signUpUser =(req,res)=>new Promise(async(resolve, reject)=>{
+
+        const {email, password}=req.body
+        try {
+            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+            const user = userCredential.user;
+            resolve({
+                error: 0,
+                message: 'Signed  successfully',
+                data: user
+            });
+        } catch (error) {
+          
+            reject({
+                error: 1,
+                message: error
+            });
+        }
+})
+
+
+
+export const signInUser =(req,res)=>new Promise(async(resolve, reject)=>{
+
+    const {email, password}=req.body
+    try {
+        const userCredential = await signInWithEmailAndPassword(auth, email, password);
+        const user = userCredential.user;
+        resolve({
+            error: 0,
+            message: 'Signed in successfully',
+            data: user
+        });
+    } catch (error) {
+        const errorMessage = error.message || 'An error occurred while signing in';
+        reject({
+            error: 1,
+            message: errorMessage
+        });
+    }
+})
+
+
+
+export const forgotPassword =(req,res)=>new Promise(async(resolve, reject)=>{
+
+    const {email}=req.body
+    try {
+         await sendPasswordResetEmail(auth,email);
+        
+        resolve({
+            error: 0,
+            message: 'Password has been sent successfully',
+            
+        });
+    } catch (error) {
+
+        reject({
+            error: 1,
+            message: error
+        });
     }
 })

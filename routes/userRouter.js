@@ -20,4 +20,8 @@ router.post('/',upload.array('avartar'), userController.createUser)
 router.post('/delete', userController.deleteUser)
 router.post('/update',upload.array('avartar'), userController.updateUser)
 
+router.post('/signup', userController.signUpUser)
+router.post('/signin', userController.signInUser)
+router.post('/forgot-password', userController.forgotPassword)
+
 export default router;
