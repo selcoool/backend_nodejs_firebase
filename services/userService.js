@@ -2,7 +2,7 @@ import { db, storage,auth } from '../config/firebase'
 import { ref, uploadBytesResumable, getDownloadURL, deleteObject } from 'firebase/storage'
 import { collection, getDocs, addDoc, deleteDoc, doc, query, onSnapshot, orderBy, limit, startAfter, serverTimestamp, getDoc, updateDoc, setDoc } from 'firebase/firestore';
 import { v4 as uuidv4 } from 'uuid'
-import { createUserWithEmailAndPassword, sendPasswordResetEmail, signInWithEmailAndPassword } from 'firebase/auth';
+import { createUserWithEmailAndPassword, deleteUser, onAuthStateChanged, sendEmailVerification, sendPasswordResetEmail, signInWithEmailAndPassword, signOut, updateEmail, updateProfile, verifyBeforeUpdateEmail } from 'firebase/auth';
 
 const { Readable } = require('stream');
 
@@ -33,65 +33,86 @@ export const createNewUser =(req,res)=>new Promise(async(resolve, reject)=>{
                 updateAt: serverTimestamp()
                 
               }
-    
-             await setDoc(doc(db, "user", id), newUser)
-              .then(async() => {
-                // console.log("Document successfully updated!");
-                        let imageDatas =[]
-                        for (let i = 0; i < fileData.length; i++) {
-
-                            const uploadStream = cloudinary.uploader.upload_stream(
-                                { resource_type: 'auto', folder: 'file_uploads' },
-                                async(error, result) => {
-                                if (error) {
-                                    // console.error('Error uploading file:', error);
-                                    res.status(500).json({ 'error': 'Lỗi tải file' });
-                                } else {
-                                    const fileUrl = result.secure_url;
-                                    const publicId = result.public_id;
-                                //    console.log(' result.secure_url', result.secure_url);
-                                //    console.log(' result.public_id', result.public_id);
-                                    const imageData ={
-                                        userId:id,
-                                        public_id:result.public_id,
-                                        url:result.secure_url
-                                        
-                                    };
-
-                                    imageDatas.push(imageData)
-
-                                     const userRef = doc(db, "user", id);
-                                     await updateDoc(userRef, {
-                                        images:imageDatas
-                                     })
-
+            await createUserWithEmailAndPassword(auth, email, password).then(async()=>{
+                   
+                            await setDoc(doc(db, "user", id), newUser)
+                            .then(async() => {
+                                
+                                    
+                            // console.log("Document successfully updated!");
+                                    let imageDatas =[]
+                                    for (let i = 0; i < fileData.length; i++) {
             
+                                        const uploadStream = cloudinary.uploader.upload_stream(
+                                            { resource_type: 'auto', folder: 'file_uploads' },
+                                            async(error, result) => {
+                                            if (error) {
+                                                // console.error('Error uploading file:', error);
+                                                res.status(500).json({ 'error': 'Lỗi tải file' });
+                                            } else {
+                                                const fileUrl = result.secure_url;
+                                                const publicId = result.public_id;
+                                            //    console.log(' result.secure_url', result.secure_url);
+                                            //    console.log(' result.public_id', result.public_id);
+                                                const imageData ={
+                                                    userId:id,
+                                                    public_id:result.public_id,
+                                                    url:result.secure_url
+                                                    
+                                                };
             
-                                    }
-                                }
-                            );
-                
-                    const bufferStream = new Readable();
-                    bufferStream.push(fileData[i].buffer);
-                    bufferStream.push(null);
-                    bufferStream.pipe(uploadStream);
-                    
-                }
-
-                resolve({
-                            error:0, 
-                            message:'Add user successfully',
+                                                imageDatas.push(imageData)
+            
+                                                const userRef = doc(db, "user", id);
+                                                await updateDoc(userRef, {
+                                                    images:imageDatas
+                                                })
+            
                         
-                        })
-                 
-    
+                        
+                                                }
+                                            }
+                                        );
+                            
+                                const bufferStream = new Readable();
+                                bufferStream.push(fileData[i].buffer);
+                                bufferStream.push(null);
+                                bufferStream.pipe(uploadStream);
+                                
+                            }
+            
+                            resolve({
+                                        error:0, 
+                                        message:'Add user successfully',
+                                    
+                                    })
+                            
+                
+                            })
+                            .catch((error) => {
+                                reject({
+                                    error:1, 
+                                    message:error
+                                })
+                            });;
+
+
+
+            }).catch((error)=>{
+
+
+                reject({
+                    error:1, 
+                    message:error
                 })
-                .catch((error) => {
-                    reject({
-                        error:1, 
-                        message:error
-                    })
-                });;
+
+            });
+
+           
+
+
+
+            
         
         
         
@@ -153,46 +174,82 @@ export const createNewUser =(req,res)=>new Promise(async(resolve, reject)=>{
 
 export const getAllUsers =(req,res)=>new Promise(async(resolve, reject)=>{
     try {
+
+                   onAuthStateChanged(auth, async(user) => {
+                    
+                    if (user) {
+
+
+                        // const user = auth.currentUser;
+
+                        // if (user !== null) {
+                        //     console.log("Sign-in provider: " + user);
+                       
+                        // }
+
+
+                        // const usersCollectionRef = collection(db, "user");
+                    // const queryUsers = query(
+                    //     usersCollectionRef
+                    //     // ,
+                    //     // orderBy("createdAt")
+                    //   );
+                    //     const unsuscribe = onSnapshot(queryUsers, (snapshot) => {
+                    //     let users = [];
+                    //     snapshot.forEach((doc) => {
+                    //         users.push({ ...doc.data(), id: doc.id });
+                    //     });
+
+
+
+                        
+                    //     resolve({
+                    //         error:0, 
+                    //         message:'Success',
+                    //         data:users
+                        
+                        
+                    //     })
+                    
+                    //   });
+
+
+                    const querySnapshot = await getDocs(collection(db, "user"));
+                    let users = [];
+                    querySnapshot.forEach((doc) => {
+                        users.push({ ...doc.data(), id: doc.id });
+                    // doc.data() is never undefined for query doc snapshots
+                    // console.log(doc.id, " => ", doc.data());
+                    });
+
+                    resolve({
+                    error:0, 
+                    message:'Get all users successfully',
+                    data:users
+                    })
+
+
+
+                    
+
+
+
+                    } else {
+                    
+
+                        reject({
+                            error:1, 
+                            message:'Sign up before doing that action !',
+                    
+                            })
+
+
+
+                    }
+                });
+
            
-        // const usersCollectionRef = collection(db, "user");
-        // const queryUsers = query(
-        //     usersCollectionRef
-        //     // ,
-        //     // orderBy("createdAt")
-        //   );
-        //     const unsuscribe = onSnapshot(queryUsers, (snapshot) => {
-        //     let users = [];
-        //     snapshot.forEach((doc) => {
-        //         users.push({ ...doc.data(), id: doc.id });
-        //     });
-
-
-
-            
-        //     resolve({
-        //         error:0, 
-        //         message:'Success',
-        //         data:users
-            
-            
-        //     })
-          
-        //   });
-
-
-        const querySnapshot = await getDocs(collection(db, "user"));
-        let users = [];
-        querySnapshot.forEach((doc) => {
-            users.push({ ...doc.data(), id: doc.id });
-        // doc.data() is never undefined for query doc snapshots
-        // console.log(doc.id, " => ", doc.data());
-        });
-
-        resolve({
-        error:0, 
-        message:'Get all users successfully',
-        data:users
-         })
+        
            
        
 
@@ -215,22 +272,36 @@ export const getOneUser =(req,res)=>new Promise(async(resolve, reject)=>{
         const docRef = doc(db, "user",id);
         const docSnap = await getDoc(docRef);
 
-        if (docSnap.exists()) {
-        // console.log("Document data:", docSnap.data());
-           resolve({
-            error:0, 
-            message:'Add one user successfully',
-            data:docSnap.data()
-             })
+       
+        if(auth.currentUser.email===docSnap.data().email){
 
-        } else {
-        // docSnap.data() will be undefined in this case
-        // console.log("No such document!");
+
+                    if (docSnap.exists()) {
+                    // console.log("Document data:", docSnap.data());
+                    resolve({
+                        error:0, 
+                        message:'Get one user successfully',
+                        data:docSnap.data()
+                        })
+
+                    } else {
+                    // docSnap.data() will be undefined in this case
+                    // console.log("No such document!");
+                        reject({
+                            error:1, 
+                            message:"No such document!"
+                        
+                        })
+                    }
+        }else{
+
             reject({
                 error:1, 
                 message:"No such document!"
             
             })
+
+
         }
 
         
@@ -249,32 +320,48 @@ export const getOneUser =(req,res)=>new Promise(async(resolve, reject)=>{
 
 
 
-export const deleteUser =(req,res)=>new Promise(async(resolve, reject)=>{
+export const deleteOneUser =(req,res)=>new Promise(async(resolve, reject)=>{
     try {
 
-        const {id}=req.body;  
-       
 
 
-       
+
+        const {id}=req.body;   
         const docRef = doc(db, "user",id);
         const docSnap_delete = await getDoc(docRef);
 
-        if (docSnap_delete.exists()) {
-           const array_images= docSnap_delete.data().images
+                    if (docSnap_delete.exists()) {
 
-           for (let i = 0; i < array_images.length; i++) {
-            const public_id=array_images[i].public_id;
-            await cloudinary.uploader.destroy(public_id);
-            // console.log('oooooooooo',array_images[i])
-    
-          }
 
-          const docSnap= await deleteDoc(doc(db, "user", id));
-            resolve({
-            error:0, 
-            message:'Delelted user successfully'
-            })
+                        if(auth.currentUser.email===docSnap_delete.data().email){
+                            
+                        const array_images= docSnap_delete.data().images
+
+                        for (let i = 0; i < array_images.length; i++) {
+                            const public_id=array_images[i].public_id;
+                            await cloudinary.uploader.destroy(public_id);
+                            // console.log('oooooooooo',array_images[i])
+                    
+                        }
+
+                        const docSnap= await deleteDoc(doc(db, "user", id));
+                                await deleteUser(auth.currentUser)
+                        
+                            resolve({
+                            error:0, 
+                            message:'Delelted user successfully'
+                            })
+
+                        }else{
+                             
+                            reject({
+                                error:1, 
+                                message:"No such document!"
+                            
+                            })
+                        }
+
+
 
          }else{
 
@@ -302,8 +389,13 @@ export const updateUser =(req,res)=>new Promise(async(resolve, reject)=>{
 
 
            
-        const {id,...body}=req.body;
+        const {id,email,...body}=req.body;
         const fileData=req.files; 
+
+        
+        const docRef1 = doc(db, "user",id);
+        const docSnap_delete1 = await getDoc(docRef1);
+        if(auth.currentUser.email===docSnap_delete1.data().email){
 
         if(fileData && fileData.length>0){ 
                
@@ -425,6 +517,22 @@ export const updateUser =(req,res)=>new Promise(async(resolve, reject)=>{
 
 
         }
+
+
+
+      }else{
+
+        reject({
+            error:1, 
+            message:"No such document!"
+        
+        })
+
+
+      }
+
+
+        
       
        
 
@@ -443,6 +551,12 @@ export const updateUser =(req,res)=>new Promise(async(resolve, reject)=>{
 
 
 export const signUpUser =(req,res)=>new Promise(async(resolve, reject)=>{
+
+
+
+    
+
+
 
         const {email, password}=req.body
         try {
@@ -476,10 +590,9 @@ export const signInUser =(req,res)=>new Promise(async(resolve, reject)=>{
             data: user
         });
     } catch (error) {
-        const errorMessage = error.message || 'An error occurred while signing in';
         reject({
             error: 1,
-            message: errorMessage
+            message: error
         });
     }
 })
@@ -505,3 +618,53 @@ export const forgotPassword =(req,res)=>new Promise(async(resolve, reject)=>{
         });
     }
 })
+
+
+
+export const signOutUser =(req,res)=>new Promise(async(resolve, reject)=>{
+
+  
+    try {
+        await signOut(auth)
+        
+        resolve({
+            error: 0,
+            message: 'You sign out successfully',
+            
+        });
+    } catch (error) {
+
+        reject({
+            error: 1,
+            message: error
+        });
+    }
+})
+
+
+
+export const delete_User =(req,res)=>new Promise(async(resolve, reject)=>{
+
+  
+    try {
+        await deleteUser(auth.currentUser)
+        
+        resolve({
+            error: 0,
+            message: 'You deleted user successfully',
+            
+        });
+    } catch (error) {
+
+        reject({
+            error: 1,
+            message: error
+        });
+    }
+})
+
+
+
+
+
+

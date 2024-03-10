@@ -101,7 +101,7 @@ export const getAllUsers =async(req,res)=>{
         // // console.log('req.query',req.query)
         const response = await services.getAllUsers(req,res);
         return res.status(200).json({
-            error:1,
+            error:0,
             status:'Success',
             data:response
         })
@@ -144,7 +144,7 @@ export const getOneUser =async(req,res)=>{
 
 
 
-export const deleteUser =async(req,res)=>{
+export const deleteOneUser =async(req,res)=>{
   
     try {
        
@@ -154,7 +154,7 @@ export const deleteUser =async(req,res)=>{
         
         // // console.log('req.params',req.params.id)
         // // console.log('req.query',req.query)
-        const response = await services.deleteUser(req,res);
+        const response = await services.deleteOneUser(req,res);
         return res.status(200).json({
             error:1,
             status:'Success',
@@ -317,7 +317,7 @@ export const signUpUser =async(req,res)=>{
             
             return res.status(500).json({
                 error:error.length,
-                status:'Success',
+                status:'Failed',
                 message:error
             })
 
@@ -401,7 +401,7 @@ export const signInUser =async(req,res)=>{
             
             return res.status(500).json({
                 error:error.length,
-                status:'Success',
+                status:'Failed',
                 message:error
             })
 
@@ -501,7 +501,68 @@ export const forgotPassword =async(req,res)=>{
         })
     }
 
+
+    
 }
+
+
+
+export const signOutUser =async(req,res)=>{
+  
+    try {
+       
+        
+        const response = await services.signOutUser(req,res);
+        return res.status(200).json({
+            error:0,
+            status:'Success',
+            data:response
+        })
+
+
+
+
+    } catch (error) {
+        return res.status(500).json({
+            error:1,
+            status:'Failed'
+        })
+    }
+
+
+    
+    
+}
+
+
+
+export const delete_User =async(req,res)=>{
+  
+    try {
+       
+        
+        const response = await services.delete_User(req,res);
+        return res.status(200).json({
+            error:0,
+            status:'Success',
+            data:response
+        })
+
+
+
+
+    } catch (error) {
+        return res.status(500).json({
+            error:1,
+            status:'Failed'
+        })
+    }
+
+
+    
+}
+
+
 
 
 
