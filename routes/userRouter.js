@@ -20,11 +20,12 @@ router.post('/',upload.array('avartar'), userController.createUser)
 router.post('/delete', userController.deleteOneUser)
 router.post('/update',upload.array('avartar'), userController.updateUser)
 
-router.post('/signup', userController.signUpUser)
+// router.post('/signup', userController.signUpUser)
 router.post('/signin', userController.signInUser)
 router.post('/forgot-password', userController.forgotPassword)
 router.post('/signout', userController.signOutUser)
-router.post('/delete-user', userController.delete_User)
+// router.post('/delete-user', userController.delete_User)
+
 
 
 

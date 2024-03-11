@@ -15,151 +15,156 @@ dotenv.config();
 export const createNewUser =(req,res)=>new Promise(async(resolve, reject)=>{
     try {
 
-           const {username, numbers, email, password,confirmPassword}=req.body;
-           const fileData=req.files;
-           const id=uuidv4();
+        const {username, numbers, email, password,confirmPassword}=req.body;
+        const fileData=req.files;
+        const id=uuidv4();
 
-           if(fileData && fileData.length>0){ 
-        
-                const newUser={
-                id:id,
-                username: username,
-                numbers:numbers,
-                email:email,
-                images:[],
-                password: password,
-                status:'inactive',
-                createdAt: serverTimestamp(),
-                updateAt: serverTimestamp()
-                
-              }
-            await createUserWithEmailAndPassword(auth, email, password).then(async()=>{
-                   
-                            await setDoc(doc(db, "user", id), newUser)
-                            .then(async() => {
-                                
+    
+          
+                                if(fileData && fileData.length>0){ 
+                        
+                                    const newUser={
+                                    id:id,
+                                    username: username,
+                                    numbers:numbers,
+                                    email:email,
+                                    images:[],
+                                    password: password,
+                                    status:'active',
+                                    createdAt: serverTimestamp(),
+                                    updateAt: serverTimestamp()
                                     
-                            // console.log("Document successfully updated!");
-                                    let imageDatas =[]
-                                    for (let i = 0; i < fileData.length; i++) {
-            
-                                        const uploadStream = cloudinary.uploader.upload_stream(
-                                            { resource_type: 'auto', folder: 'file_uploads' },
-                                            async(error, result) => {
-                                            if (error) {
-                                                // console.error('Error uploading file:', error);
-                                                res.status(500).json({ 'error': 'Lỗi tải file' });
-                                            } else {
-                                                const fileUrl = result.secure_url;
-                                                const publicId = result.public_id;
-                                            //    console.log(' result.secure_url', result.secure_url);
-                                            //    console.log(' result.public_id', result.public_id);
-                                                const imageData ={
-                                                    userId:id,
-                                                    public_id:result.public_id,
-                                                    url:result.secure_url
+                                }
+                                await createUserWithEmailAndPassword(auth, email, password).then(async()=>{
+                                    
+                                                await setDoc(doc(db, "user", id), newUser)
+                                                .then(async() => {
                                                     
-                                                };
-            
-                                                imageDatas.push(imageData)
-            
-                                                const userRef = doc(db, "user", id);
-                                                await updateDoc(userRef, {
-                                                    images:imageDatas
-                                                })
-            
-                        
-                        
+                                                        
+                                                // console.log("Document successfully updated!");
+                                                        let imageDatas =[]
+                                                        for (let i = 0; i < fileData.length; i++) {
+                                
+                                                            const uploadStream = cloudinary.uploader.upload_stream(
+                                                                { resource_type: 'auto', folder: 'file_uploads' },
+                                                                async(error, result) => {
+                                                                if (error) {
+                                                                    // console.error('Error uploading file:', error);
+                                                                    res.status(500).json({ 'error': 'Lỗi tải file' });
+                                                                } else {
+                                                                    const fileUrl = result.secure_url;
+                                                                    const publicId = result.public_id;
+                                                                //    console.log(' result.secure_url', result.secure_url);
+                                                                //    console.log(' result.public_id', result.public_id);
+                                                                    const imageData ={
+                                                                        userId:id,
+                                                                        public_id:result.public_id,
+                                                                        url:result.secure_url
+                                                                        
+                                                                    };
+                                
+                                                                    imageDatas.push(imageData)
+                                
+                                                                    const userRef = doc(db, "user", id);
+                                                                    await updateDoc(userRef, {
+                                                                        images:imageDatas
+                                                                    })
+                                
+                                            
+                                            
+                                                                    }
+                                                                }
+                                                            );
+                                                
+                                                    const bufferStream = new Readable();
+                                                    bufferStream.push(fileData[i].buffer);
+                                                    bufferStream.push(null);
+                                                    bufferStream.pipe(uploadStream);
+                                                    
                                                 }
-                                            }
-                                        );
+                                
+                                                resolve({
+                                                            error:0, 
+                                                            message:'Add user successfully',
+                                                        
+                                                        })
+                                                
+                                    
+                                                })
+                                                .catch((error) => {
+                                                    reject({
+                                                        error:1, 
+                                                        message:error
+                                                    })
+                                                });;
+                    
+                    
+                    
+                                }).catch((error)=>{
+                    
+                    
+                                    reject({
+                                        error:1, 
+                                        message:error
+                                    })
+                    
+                                });
+                    
                             
-                                const bufferStream = new Readable();
-                                bufferStream.push(fileData[i].buffer);
-                                bufferStream.push(null);
-                                bufferStream.pipe(uploadStream);
+                    
+                    
+                    
+                                
+                            
+                            
+                            
+                            }else{
+                    
+                                    const newUser={
+                                    id:id,
+                                    username: username,
+                                    numbers:numbers,
+                                    email:email,
+                                    images:[],
+                                    password: password,
+                                    status:'active',
+                                    createdAt: serverTimestamp(),
+                                    updateAt: serverTimestamp()
+                                    
+                                }
+                        
+                                setDoc(doc(db, "user", id), newUser)
+                                .then(() => {
+                                    // console.log("Document successfully updated!");
+                    
+                                        resolve({
+                                            error:0, 
+                                            message:'Add user successfully',
+                                        
+                                        })
+                        
+                        
+                        
+                                    })
+                                    .catch((error) => {
+                        
+                                        reject({
+                                            error:1, 
+                                            message:error
+                                        })
+                    
+                                    });;
+                    
                                 
                             }
-            
-                            resolve({
-                                        error:0, 
-                                        message:'Add user successfully',
-                                    
-                                    })
-                            
+
                 
-                            })
-                            .catch((error) => {
-                                reject({
-                                    error:1, 
-                                    message:error
-                                })
-                            });;
 
 
 
-            }).catch((error)=>{
 
 
-                reject({
-                    error:1, 
-                    message:error
-                })
-
-            });
-
-           
-
-
-
-            
-        
-        
-        
-          }else{
-
-                const newUser={
-                id:id,
-                username: username,
-                numbers:numbers,
-                email:email,
-                images:[],
-                password: password,
-                status:'inactive',
-                createdAt: serverTimestamp(),
-                updateAt: serverTimestamp()
-                
-              }
-    
-              setDoc(doc(db, "user", id), newUser)
-              .then(() => {
-                // console.log("Document successfully updated!");
-
-                    resolve({
-                        error:0, 
-                        message:'Add user successfully',
-                    
-                    })
-    
-    
-    
-                })
-                .catch((error) => {
-    
-                    reject({
-                        error:1, 
-                        message:error
-                    })
-
-                });;
-
-            
-          }
-
-
-
-      
-     
+          
        
     } catch (error) {
          reject({
@@ -237,9 +242,9 @@ export const getAllUsers =(req,res)=>new Promise(async(resolve, reject)=>{
                     } else {
                     
 
-                        reject({
+                        resolve({
                             error:1, 
-                            message:'Sign up before doing that action !',
+                            message:'Sign in before doing that action !',
                     
                             })
 
@@ -550,31 +555,7 @@ export const updateUser =(req,res)=>new Promise(async(resolve, reject)=>{
 
 
 
-export const signUpUser =(req,res)=>new Promise(async(resolve, reject)=>{
 
-
-
-    
-
-
-
-        const {email, password}=req.body
-        try {
-            const userCredential = await createUserWithEmailAndPassword(auth, email, password);
-            const user = userCredential.user;
-            resolve({
-                error: 0,
-                message: 'Signed  successfully',
-                data: user
-            });
-        } catch (error) {
-          
-            reject({
-                error: 1,
-                message: error
-            });
-        }
-})
 
 
 
@@ -643,25 +624,58 @@ export const signOutUser =(req,res)=>new Promise(async(resolve, reject)=>{
 
 
 
-export const delete_User =(req,res)=>new Promise(async(resolve, reject)=>{
+// export const signUpUser =(req,res)=>new Promise(async(resolve, reject)=>{
+
+
+
+    
+
+
+
+//         const {email, password}=req.body
+//         try {
+//             const userCredential = await createUserWithEmailAndPassword(auth, email, password);
+//             const user = userCredential.user;
+//             resolve({
+//                 error: 0,
+//                 message: 'Signed up successfully',
+//                 data: user
+//             });
+//         } catch (error) {
+          
+//             reject({
+//                 error: 1,
+//                 message: error
+//             });
+//         }
+// })
+
+
+// export const delete_User =(req,res)=>new Promise(async(resolve, reject)=>{
 
   
-    try {
-        await deleteUser(auth.currentUser)
+//     try {
+//         await deleteUser(auth.currentUser)
         
-        resolve({
-            error: 0,
-            message: 'You deleted user successfully',
+//         resolve({
+//             error: 0,
+//             message: 'You deleted user successfully',
             
-        });
-    } catch (error) {
+//         });
+//     } catch (error) {
 
-        reject({
-            error: 1,
-            message: error
-        });
-    }
-})
+//         reject({
+//             error: 1,
+//             message: error
+//         });
+//     }
+// })
+
+
+
+
+
+
 
 
 
