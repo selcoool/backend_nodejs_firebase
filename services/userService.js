@@ -180,9 +180,10 @@ export const createNewUser =(req,res)=>new Promise(async(resolve, reject)=>{
 export const getAllUsers =(req,res)=>new Promise(async(resolve, reject)=>{
     try {
 
-                   onAuthStateChanged(auth, async(user) => {
+                //    onAuthStateChanged(auth, async(user) => {
                     
-                    if (user) {
+                //     if (user) {
+                    
 
 
                         // const user = auth.currentUser;
@@ -239,19 +240,19 @@ export const getAllUsers =(req,res)=>new Promise(async(resolve, reject)=>{
 
 
 
-                    } else {
+                //     } else {
                     
 
-                        resolve({
-                            error:1, 
-                            message:'Sign in before doing that action !',
+                //         resolve({
+                //             error:1, 
+                //             message:'Sign in before doing that action !',
                     
-                            })
+                //             })
 
 
 
-                    }
-                });
+                //     }
+                // });
 
            
         
